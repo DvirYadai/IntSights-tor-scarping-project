@@ -7,8 +7,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true,
   },
-  userImg: String,
-  keywords: [String],
+  keywords: {
+    type: [String],
+    default: [],
+  },
+  searchInterval: {
+    type: Number,
+    default: 5,
+  },
 });
 
 const User = mongoose.model("user", userSchema);
