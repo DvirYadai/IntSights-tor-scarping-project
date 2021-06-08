@@ -1,12 +1,12 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import TextField from "@material-ui/core/TextField";
 import { makeStyles } from "@material-ui/core/styles";
 import Chip from "@material-ui/core/Chip";
-import { useUser } from "../contexts/UserContext";
 import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "@material-ui/core";
 import CheckIcon from "@material-ui/icons/Check";
+import socket from "../socketConfig";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -22,14 +22,27 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export const Settings = () => {
-  const user = useUser();
   const { currentUser } = useAuth();
   const wordRef = useRef();
   const intervalRef = useRef();
-  const [words, setWords] = useState(user.keywords);
-  const [interval, setInterval] = useState(user.searchInterval);
+  const [words, setWords] = useState();
+  const [interval, setInterval] = useState();
   const classes = useStyles();
   const [saved, setSaved] = useState(false);
+
+  useEffect(async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:3001/api/v1/user?uid=${currentUser.uid}`
+      );
+      if (res.data.keywords.length === 0) {
+        setWords([]);
+      } else setWords(res.data.keywords);
+      setInterval(res.data.searchInterval);
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
 
   const handleChipDelete = (chipToDelete) => () => {
     setSaved(false);
@@ -37,6 +50,7 @@ export const Settings = () => {
   };
 
   const handleChipAdd = () => {
+    if (wordRef.current.value === "") return;
     setSaved(false);
     setWords((prev) => [...prev, wordRef.current.value]);
     wordRef.current.value = "";
@@ -58,6 +72,14 @@ export const Settings = () => {
         words,
         interval,
       });
+      if (words.length === 0) {
+        socket.emit("endSearchTask");
+      } else {
+        socket.emit("keywordsSearch", {
+          keywords: words,
+          interval: interval,
+        });
+      }
       setSaved(true);
     } catch (error) {
       console.log(error);
@@ -66,46 +88,41 @@ export const Settings = () => {
   };
 
   return (
-    <div>
-      <p>Keywords:</p>
+    <div className="settings-div">
+      <h3>Keywords:</h3>
       <p>
-        <small>
-          Keywords let you search any words every few minutes, you can determine
-          the interval of the search.
-        </small>
+        Keywords let you search any words every few minutes, you can determine
+        the interval of the search.
       </p>
       <TextField id="outlined-basic" variant="outlined" inputRef={wordRef} />
-      <Button onClick={handleChipAdd}>Add</Button>
+      <Button id="add-word-button" onClick={handleChipAdd}>
+        Add
+      </Button>
       <div className={classes.root}>
-        {words.map((word, i) => {
-          return (
-            <li key={i}>
-              <Chip
-                label={word}
-                onDelete={handleChipDelete(word)}
-                className={classes.chip}
-              />
-            </li>
-          );
-        })}
+        {words &&
+          words.map((word, i) => {
+            return (
+              <li key={i}>
+                <Chip
+                  label={word}
+                  onDelete={handleChipDelete(word)}
+                  className={classes.chip}
+                />
+              </li>
+            );
+          })}
       </div>
-      <p>Search interval (in minutes)</p>
-      <p>
-        <small>Determine how often the search will be executed</small>
-      </p>
+      <h3>Search interval (in minutes)</h3>
+      <p>Determine how often the search will be executed</p>
       <TextField
         id="outlined-number"
-        label="Search Interval"
         type="number"
         variant="outlined"
         onChange={handleIntervalChange}
-        value={interval}
+        value={interval && interval}
         inputRef={intervalRef}
       />
-      <Button
-        style={{ display: "block", backgroundColor: "lightcoral" }}
-        onClick={handleSave}
-      >
+      <Button id="save-settings-button" onClick={handleSave}>
         {saved ? <CheckIcon /> : "Save"}
       </Button>
     </div>

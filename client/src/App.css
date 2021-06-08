@@ -1,4 +1,57 @@
 .login-div {
   display: flex;
   justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.App {
+  background-color: rgb(238, 235, 235);
+  position: relative;
+}
+
+.posts-div {
+  width: 70%;
+  margin: auto;
+}
+
+.post-div {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid white;
+  box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+}
+
+.post-body {
+  word-wrap: break-word;
+}
+
+.settings-div {
+  height: 100vh;
+  /* width: 40%; */
+  /* margin: auto; */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 20%);
+}
+
+#add-word-button {
+  margin: 0.5rem 0 0 1rem;
+  background-color: lightgray;
+}
+
+#add-word-button:hover {
+  background-color: rgb(167, 166, 166);
+}
+
+#save-settings-button {
+  display: block;
+  background-color: lightcoral;
+  margin: 1rem auto;
+}
+
+#save-settings-button:hover {
+  background-color: rgb(241, 75, 75);
 }

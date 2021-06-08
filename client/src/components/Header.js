@@ -15,8 +15,12 @@ import MenuItem from "@material-ui/core/MenuItem";
 import { useAuth } from "../contexts/AuthContext";
 import { useHistory } from "react-router";
 import axios from "axios";
-import { io } from "socket.io-client";
 import { Link } from "react-router-dom";
+import socket from "../socketConfig";
+import { List } from "@material-ui/core";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import Divider from "@material-ui/core/Divider";
 
 const useStyles = makeStyles((theme) => ({
   grow: {
@@ -84,15 +88,38 @@ export default function Header() {
   const { currentUser, logout, login } = useAuth();
   const history = useHistory();
   const [anchorElAccount, setAnchorElAccount] = useState(null);
+  const [anchorElNotification, setAnchorElNotification] = useState(null);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [notification, setNotification] = useState([]);
 
-  useEffect(() => {
-    const newSocket = io("http://localhost:3001");
-    newSocket.on("scraperUpdate", (data) => {
+  useEffect(async () => {
+    if (!currentUser) {
+      return;
+    }
+    const res = await axios.get(
+      `http://localhost:3001/api/v1/user?uid=${currentUser.uid}`
+    );
+    if (res.data.keywords.length > 0) {
+      socket.emit("keywordsSearch", {
+        keywords: res.data.keywords,
+        interval: res.data.searchInterval,
+      });
+    }
+    socket.on("keywordMatch", (data) => {
+      console.log(data);
       setNotificationCount((prev) => (prev += 1));
+      setNotification((prev) => [
+        `There was a match to your word: ${data.keyword}, go to searched posts section for more details`,
+        ...prev,
+      ]);
     });
-    return () => newSocket.close();
-  }, []);
+    socket.on("scraperUpdate", (data) => {
+      console.log(data);
+      setNotificationCount((prev) => (prev += 1));
+      setNotification((prev) => [data.message, ...prev]);
+    });
+    return () => socket.close();
+  }, [currentUser]);
 
   const handleLogout = async () => {
     try {
@@ -115,6 +142,16 @@ export default function Header() {
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const handleNotificationClick = (event) => {
+    setAnchorElNotification(event.currentTarget);
+  };
+
+  const handleNotificationClose = () => {
+    setNotificationCount(0);
+    setNotification([]);
+    setAnchorElNotification(null);
   };
 
   const handleAccountClick = (event) => {
@@ -164,7 +201,12 @@ export default function Header() {
                     Dashboard
                   </Link>
                 </Button>{" "}
-                <IconButton aria-label="show new notifications" color="inherit">
+                <IconButton
+                  aria-label="show new notifications"
+                  color="inherit"
+                  aria-controls="notification-menu"
+                  onClick={handleNotificationClick}
+                >
                   <Badge badgeContent={notificationCount} color="secondary">
                     <NotificationsIcon />
                   </Badge>
@@ -173,20 +215,44 @@ export default function Header() {
                   edge="end"
                   aria-label="account of current user"
                   aria-haspopup="true"
-                  aria-controls="simple-menu"
+                  aria-controls="account-menu"
                   color="inherit"
                   onClick={handleAccountClick}
                 >
                   <AccountCircle />
                 </IconButton>
                 <Menu
-                  id="simple-menu"
+                  id="account-menu"
                   anchorEl={anchorElAccount}
                   keepMounted
                   open={Boolean(anchorElAccount)}
                   onClose={handleAccountClose}
                 >
                   <MenuItem onClick={handleAccountSettings}>Settings</MenuItem>
+                </Menu>
+                <Menu
+                  id="notification-menu"
+                  anchorEl={anchorElNotification}
+                  keepMounted
+                  open={Boolean(anchorElNotification)}
+                  onClose={handleNotificationClose}
+                >
+                  <List>
+                    {notification.length > 0 ? (
+                      notification.map((not, i) => (
+                        <div key={i}>
+                          <ListItem>
+                            <ListItemText primary={not} />
+                          </ListItem>
+                          <Divider />
+                        </div>
+                      ))
+                    ) : (
+                      <ListItem>
+                        <ListItemText primary="You don't have notifications" />
+                      </ListItem>
+                    )}
+                  </List>
                 </Menu>
               </>
             ) : null}
