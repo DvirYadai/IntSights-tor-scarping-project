@@ -1,26 +1,9 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Post } from "../components/Post";
+import { usePosts } from "../contexts/PostsContext";
 
 export const Dashboard = () => {
-  const [posts, setPosts] = useState([]);
-
-  const getPosts = async () => {
-    try {
-      const res = await axios.get("http://localhost:3001/api/v1/posts");
-      setPosts(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(async () => {
-    getPosts();
-    const interval = setInterval(() => {
-      getPosts();
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const { posts } = usePosts();
 
   return (
     <div className="posts-div">

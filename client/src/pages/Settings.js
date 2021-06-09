@@ -6,7 +6,6 @@ import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "@material-ui/core";
 import CheckIcon from "@material-ui/icons/Check";
-import socket from "../socketConfig";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -72,14 +71,6 @@ export const Settings = () => {
         words,
         interval,
       });
-      if (words.length === 0) {
-        socket.emit("endSearchTask");
-      } else {
-        socket.emit("keywordsSearch", {
-          keywords: words,
-          interval: interval,
-        });
-      }
       setSaved(true);
     } catch (error) {
       console.log(error);
@@ -122,6 +113,7 @@ export const Settings = () => {
         value={interval && interval}
         inputRef={intervalRef}
       />
+      <p>You must refresh the page for the changes to take effect</p>
       <Button id="save-settings-button" onClick={handleSave}>
         {saved ? <CheckIcon /> : "Save"}
       </Button>

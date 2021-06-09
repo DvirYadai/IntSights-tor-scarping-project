@@ -6,18 +6,21 @@ import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import Header from "./components/Header";
 import { Settings } from "./pages/Settings";
+import { PostsProvider } from "./contexts/PostsContext";
 
 function App() {
   return (
     <div className="App">
       <AuthProvider>
         <Router>
-          <Header />
-          <Switch>
-            <PrivateRoute exact path="/" component={Dashboard} />
-            <PrivateRoute exact path="/settings" component={Settings} />
-            <Route exact path="/login" component={Login} />
-          </Switch>
+          <PostsProvider>
+            <Header />
+            <Switch>
+              <PrivateRoute exact path="/" component={Dashboard} />
+              <PrivateRoute exact path="/settings" component={Settings} />
+              <Route exact path="/login" component={Login} />
+            </Switch>
+          </PostsProvider>
         </Router>
       </AuthProvider>
     </div>

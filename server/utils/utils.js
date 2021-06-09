@@ -5,9 +5,11 @@ const cheerio = require("cheerio");
 
 const addPost = async (postArr) => {
   let count = 0;
+  const newPosts = [];
   for (const post of postArr) {
     const isExist = await Post.find({ body: post.body, title: post.title });
     if (isExist.length === 0) {
+      newPosts.push(post);
       count++;
       try {
         await Post.create(post);
@@ -16,7 +18,7 @@ const addPost = async (postArr) => {
       }
     }
   }
-  return count;
+  return { count, newPosts };
 };
 
 const scraper = async () => {
@@ -50,9 +52,11 @@ const scraper = async () => {
     bodyNode.each((i, e) => {
       posts[i].body = $(e).text().replace(/\s\s+/g, " ");
     });
-    const count = await addPost(posts);
+    const { count, newPosts } = await addPost(posts);
     io.sockets.emit("scraperUpdate", {
       message: `Data collection from a source completed successfully, there are ${count} new posts`,
+      newPostsCount: count,
+      newPosts,
     });
   } catch (error) {
     console.log(error);
@@ -62,25 +66,4 @@ const scraper = async () => {
   }
 };
 
-const keywordsSearch = async (keywords, socketId) => {
-  console.log("search started", keywords);
-  try {
-    for (const word of keywords) {
-      const regex = new RegExp(word);
-      const posts = await Post.find({});
-      posts.forEach((post) => {
-        if (regex.test(post.title)) {
-          io.to(socketId).emit("keywordMatch", { keyword: word, post });
-        } else {
-          if (regex.test(post.body)) {
-            io.to(socketId).emit("keywordMatch", { keyword: word, post });
-          }
-        }
-      });
-    }
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-module.exports = { scraper, keywordsSearch };
+module.exports = scraper;

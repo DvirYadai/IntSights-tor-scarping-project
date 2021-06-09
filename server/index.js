@@ -4,37 +4,10 @@ const server = require("http").createServer(app);
 global.io = require("socket.io")(server, {
   cors: { origin: "http://localhost:3000", methods: ["GET", "POST"] },
 });
-const { keywordsSearch } = require("./utils/utils");
-const cron = require("node-cron");
 
 io.on("connection", (socket) => {
   console.log(socket.id);
-  let searchTask;
-  socket.on("keywordsSearch", (data) => {
-    console.log("keywordsSearch");
-    if (searchTask !== undefined) {
-      searchTask.stop();
-    }
-    searchTask = cron.schedule(
-      `*/${data.interval} * * * *`,
-      () => {
-        keywordsSearch(data.keywords, socket.id);
-      },
-      {
-        scheduled: false,
-      }
-    );
-    searchTask.start();
-  });
-  socket.on("endSearchTask", () => {
-    if (searchTask !== undefined) {
-      searchTask.stop();
-    }
-  });
   socket.on("disconnect", () => {
-    if (searchTask) {
-      searchTask.stop();
-    }
     console.log(`user has disconnected`);
   });
 });

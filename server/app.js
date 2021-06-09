@@ -4,7 +4,7 @@ const cors = require("cors");
 const postsRoute = require("./routes/postsRoute");
 const userRoute = require("./routes/userRoute");
 const cron = require("node-cron");
-const { scraper } = require("./utils/utils");
+const scraper = require("./utils/utils");
 const axios = require("axios");
 
 app.use(cors());
@@ -23,7 +23,7 @@ app.get("/test", async (req, res) => {
   res.send(response.data);
 });
 
-const scrapeTask = cron.schedule("*/1 * * * *", scraper, {
+const scrapeTask = cron.schedule("*/2 * * * *", scraper, {
   scheduled: false,
 });
 
